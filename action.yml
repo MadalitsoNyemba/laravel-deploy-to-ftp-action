@@ -1,0 +1,97 @@
+name: "Laravel Deploy Action"
+description: "A GitHub Action to deploy a Laravel project to a server via FTP with customizable PHP versions and extensions."
+
+inputs:
+  branch:
+    description: "The branch to deploy"
+    required: true
+  php-version:
+    description: "The PHP version to use"
+    required: false
+    default: "8.1"
+  php-extensions:
+    description: "Comma-separated list of PHP extensions to install"
+    required: false
+    default: "mbstring,xml,intl,curl,gd"
+  ftp-username-main:
+    description: "FTP Username for the main branch"
+    required: true
+  ftp-username-dev:
+    description: "FTP Username for the development branch"
+    required: true
+  ftp-server:
+    description: "FTP server address"
+    required: true
+  ftp-password:
+    description: "FTP password"
+    required: true
+  use-env-files:
+    description: "Whether to use .env.prod and .env.dev files (true/false)"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2.3.2
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.php-version }}
+        extensions: ${{ inputs.php-extensions }}
+
+    - name: Copy .env based on branch
+      run: |
+        BRANCH_NAME=${GITHUB_REF#refs/heads/}
+        echo "Current branch: $BRANCH_NAME"
+
+        if [ "${{ inputs.use-env-files }}" == "true" ]; then
+          if [ "$BRANCH_NAME" == "main" ]; then
+              cp .env.prod .env
+              FTP_USERNAME="${{ inputs.ftp-username-main }}"
+          elif [ "$BRANCH_NAME" == "development" ]; then
+              cp .env.dev .env
+              FTP_USERNAME="${{ inputs.ftp-username-dev }}"
+          else
+              if [ ! -f .env ]; then
+                  cp .env.example .env
+              fi
+          fi
+        else
+          if [ ! -f .env ]; then
+              cp .env.example .env
+          fi
+        fi
+
+        echo "FTP Username: $FTP_USERNAME"
+
+        mkdir -p storage/framework/sessions
+        mkdir -p storage/framework/views
+        mkdir -p storage/framework/cache
+        chmod -R 775 storage/framework
+
+    - name: Install Composer Dependencies
+      run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+    - name: Generate Application Key
+      run: php artisan key:generate
+
+    - name: Set Bootstrap Cache Permissions
+      run: chmod -R 775 bootstrap/cache
+
+    - name: Cache Composer Dependencies
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-composer-
+
+    - name: Sync Files via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ inputs.ftp-server }}
+        username: ${{ env.FTP_USERNAME }}
+        password: ${{ inputs.ftp-password }}
