@@ -26,8 +26,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Deploy
-        uses: your-username/laravel-deploy-action@v1
+      - name: Deploy Laravel App to FTP Server Action       
+        uses: MadalitsoNyemba/laravel-deploy-to-ftp-action@release
         with:
           branch: ${{ github.ref_name }}
           php-version: '8.1'
