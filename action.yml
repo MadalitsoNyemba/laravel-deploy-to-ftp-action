@@ -1,4 +1,4 @@
-name: "Laravel Deploy Action"
+name: "Deploy Laravel App to FTP Server Action"
 description: "A GitHub Action to deploy a Laravel project to a server via FTP with customizable PHP versions and extensions."
 
 inputs:
