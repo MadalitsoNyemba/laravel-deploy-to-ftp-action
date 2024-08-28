@@ -47,4 +47,4 @@ This GitHub Action leverages several other amazing GitHub Actions:
 - **[shivammathur/setup-php](https://github.com/shivammathur/setup-php)**: Used to set up the desired PHP version and extensions.
 - **[SamKirkland/FTP-Deploy-Action](https://github.com/SamKirkland/FTP-Deploy-Action)**: Used to sync files via FTP to the server.
 
-These tools make it easy to build and deploy your Laravel applications in a continuous integration/continuous deployment (CI/CD) pipeline.
+These tools make it easy to build and deploy your Laravel applications to FTP servers in a continuous integration/continuous deployment (CI/CD) pipeline.
